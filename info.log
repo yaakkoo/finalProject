@@ -1,0 +1,15 @@
+{"message":"connected on port 3000","level":"error","service":"user-service","timestamp":"2021-04-14T15:39:26.128Z"}
+{"message":"connected on port 3000","level":"error","service":"user-service","timestamp":"2021-04-14T15:40:36.473Z"}
+{"message":"connected on port 3000","level":"error","service":"user-service","timestamp":"2021-04-14T15:40:53.803Z"}
+{"message":"connected on port 3000","level":"error","service":"user-service","timestamp":"2021-04-14T15:40:56.319Z"}
+{"message":"connected on port 3000","level":"error","service":"user-service","timestamp":"2021-04-14T15:45:09.611Z"}
+{"message":"connected on port 3000","level":"error","service":"user-service","timestamp":"2021-04-15T08:17:07.418Z"}
+{"code":"ETIMEOUT","syscall":"querySrv","hostname":"_mongodb._tcp.cluster0.2mc70.mongodb.net","level":"error","service":"user-service","timestamp":"2021-04-15T08:19:37.516Z"}
+{"message":"connected on port 3000","level":"error","service":"user-service","timestamp":"2021-04-15T08:21:57.708Z"}
+{"code":"ETIMEOUT","syscall":"querySrv","hostname":"_mongodb._tcp.cluster0.2mc70.mongodb.net","level":"error","service":"user-service","timestamp":"2021-04-15T08:24:27.872Z"}
+{"message":"connected on port 3000","level":"error","service":"user-service","timestamp":"2021-04-15T08:27:24.403Z"}
+{"code":"ETIMEOUT","syscall":"querySrv","hostname":"_mongodb._tcp.cluster0.2mc70.mongodb.net","level":"error","service":"user-service","timestamp":"2021-04-15T08:29:54.655Z"}
+{"message":"connected on port 3000","level":"error","service":"user-service","timestamp":"2021-04-15T08:34:01.144Z"}
+{"message":"connected on port 3000","level":"error","service":"user-service","timestamp":"2021-04-15T08:34:09.596Z"}
+{"code":"ETIMEOUT","syscall":"querySrv","hostname":"_mongodb._tcp.cluster0.2mc70.mongodb.net","level":"error","service":"user-service","timestamp":"2021-04-15T08:36:39.733Z"}
+{"message":"connected on port 3000","level":"error","service":"user-service","timestamp":"2021-04-15T08:47:44.714Z"}
