@@ -4,12 +4,13 @@ const User = require("../model/user")
 
 exports.getMatchInfo = async (req, res) => {
     try {
-        let user1 = await User.findOne({ name: req.body.user1 })
-        let user2 = await User.findOne({ name: req.body.user2 })
-        let match = await (await Fight.findOne({ user1: user1._id, user2: user2._id })).populate({ path: 'user1', select: 'name rate _id' }).populate(({ path: 'user2', select: 'name rate _id' }))
+        let match = await Fight.findOne({ $or: [{ user1: req.body._id }, { user2: req.body._id }] }).populate({ path: 'user1', select: 'name rate _id' }).populate(({ path: 'user2', select: 'name rate _id' }))
         if (match)
             return res.status(200).json({
                 match_info: match
+            })
+            else return res.status(404).json({
+                msg : 'no such match'
             })
     } catch (error) {
         return res.status(404).json({
@@ -20,7 +21,7 @@ exports.getMatchInfo = async (req, res) => {
 
 exports.friendMatch = async (req, res) => {
     try {
-        let friend=false
+        let friend = false
         let receiver = await User.findOne({ name: req.body.receiver })
         let sender = await User.findOne({ name: req.body.sender })
         sender.friend.forEach(element => {
@@ -40,10 +41,10 @@ exports.friendMatch = async (req, res) => {
             return res.status(404).json({
                 msg: "notification already sent"
             })
-        let noti = await sendNoti(req.body.sender, req.body.receiver)
+        let noti = await sendNoti(req.body.sender, req.body.receiver, req.body.difficulty)
         if (noti === 'sent') {
             return res.status(200).json({
-                msg: "Notification sent to " + receiver.name
+                msg: "Notification sent to " + receiver.name + " \ndiffeculty : " + req.body.difficulty
             })
         } else {
             return res.status(200).json({
@@ -142,10 +143,10 @@ exports.randomMatch = async (req, res) => {
                 msg: "try again"
             })
         else {
-            let noti = await sendNoti(req.body.sender, receiver[i].name)
+            let noti = await sendNoti(req.body.sender, receiver[i].name, req.body.difficulty)
             if (noti === 'sent') {
                 return res.status(200).json({
-                    msg: "Notification sent to " + receiver[i].name
+                    msg: "Notification sent to " + receiver[i].name + " \ndiffeculty : " + req.body.difficulty
                 })
             } else {
                 return res.status(200).json({
@@ -188,12 +189,12 @@ exports.endFight = async (req, res) => {
     }
 }
 
-async function sendNoti(senderName, receiverName) {
+async function sendNoti(senderName, receiverName, difficulty) {
 
     try {
         let sender = await User.findOneAndUpdate({ name: senderName }, {
             $push: {
-                sent_notification: receiverName
+                sent_notification: receiverName + " \ndiffeculty : " + difficulty
             }
         })
 
@@ -202,7 +203,7 @@ async function sendNoti(senderName, receiverName) {
                 $push: {
                     notification: {
                         friend_id: sender._id,
-                        noti_text: sender.name + " asking for a fight !!"
+                        noti_text: sender.name + " asking for a fight !! \ndiffeculty : " + difficulty
                     }
                 }
             }
