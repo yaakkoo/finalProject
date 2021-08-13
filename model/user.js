@@ -25,35 +25,24 @@ const notificationSchema = new mongoose.Schema(
 );
 
 const UserSchema = new mongoose.Schema({
-    name: {
-        type: String,
-    },
-    profile_pic: {
-        type: String
-    },
-    password: {
-        type: String,
-    },
-    rate: {
-        type: Number,
-        default: 0,
-    },
-    win: {
-        type: Number,
-        default: 0,
-    },
-    lose: {
-        type: Number,
-        default: 0,
-    },
-    numOfSub: {
-        type: Number,
-        default: 0,
-    },
-    online: {
-        type: Boolean,
-        default: true,
-    },
+    name: String,
+
+    email: String,
+    
+    profile_pic: String,
+    
+    password: String,
+    
+    rate: Number,
+    
+    win: Number,
+
+    lose: Number,
+
+    numOfSub: Number,
+
+    online: Boolean,
+
     admin: Boolean,
 
     friend: [friendSchema],
@@ -66,7 +55,7 @@ const UserSchema = new mongoose.Schema({
 
     sent_notification: [String],
 
-    uuid: String
+    uuid: String,
 
 })
 

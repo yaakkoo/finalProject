@@ -1,7 +1,19 @@
 const jwt = require('jsonwebtoken');
 const User = require('../model/user');
+const redis = require('redis');
+let client = redis.createClient()
+const nodemailer = require('nodemailer')
 
-exports.getUser = async function (req, res) {
+
+const transporter = nodemailer.createTransport({
+    service: 'hotmail',
+    auth: {
+        user: 'CompetitiveFightClub@outlook.com',
+        pass: '1011001@yY'
+    }
+})
+
+exports.getUser = async (req, res) => {
     try {
         let users = await User.find({ online: true }).select('-password -__v').populate({ path: 'friend.friend_id', select: 'name rate -_id' }).populate({ path: 'received_friend.friend_id', select: 'name rate -_id' })
 
@@ -16,7 +28,7 @@ exports.getUser = async function (req, res) {
     }
 }
 
-exports.getUserName = async function (req, res) {
+exports.getUserName = async (req, res) => {
     try {
         let user = await User.findOne({ name: req.body.name }).select('-password -__v').populate({ path: 'friend.friend_id', select: 'name rate -_id' }).populate({ path: 'received_friend.friend_id', select: 'name rate -_id' })
         res.status(200).json({
@@ -30,7 +42,7 @@ exports.getUserName = async function (req, res) {
     }
 }
 
-exports.getUserId = async function (req, res) {
+exports.getUserId = async (req, res) => {
     try {
         let user = await User.findOne({ _id: req.body.id }).select('-password -__v').populate({ path: 'friend.friend_id', select: 'name rate -_id' }).populate({ path: 'received_friend.friend_id', select: 'name rate -_id' })
         if (!user) {
@@ -49,34 +61,71 @@ exports.getUserId = async function (req, res) {
     }
 }
 
-exports.addUser = async function (req, res) {
+exports.addUser = async (req, res) => {
     try {
+
+
+        client.on('connect', () => {
+            console.log('connected to redis');
+        })
+
+        client.on('error', (err) => {
+            console.log(err);
+        })
+
         let user = await User.findOne({ name: req.body.name })
         if (user) {
             return res.status(200).json({
                 msg: "Username already existed"
             })
         }
-        req.body.rate = 0
-        req.body.win = 0
-        req.body.lose = 0
-        req.body.numOfSub = 0
-        req.body.online = true
-        req.body.inFight = false
-        req.body.notification = []
-        req.body.friends = []
-        req.body.sent_frined = []
-        req.body.sent_noti = []
-        req.body.image = ''
-        req.body.uuid = ''
-        user = await User.create(req.body)
+        user = {}
+        user.rate = 0
+        user.win = 0
+        user.lose = 0
+        user.numOfSub = 0
+        user.online = true
+        user.inFight = false
+        user.notification = []
+        user.friends = []
+        user.sent_frined = []
+        user.sent_noti = []
+        user.image = ''
+        user.uuid = ''
+        user.name = req.body.name
+        user.email = req.body.email
+        user.password = req.body.password
+        user.admin = req.body.admin
 
-        const token = jwt.sign({ _id: user._id , user_name : user.name  }, process.env.TOKEN);
+        let code = Math.floor(Math.random() * 9999)
 
-        res.status(200).json({
-            user: user,
-            token: token
+        const options = {
+            from: 'CompetitiveFightClub@outlook.com',
+            to: req.body.email,
+            subject: 'Confirm your account',
+            html: '<div style="text-align: center; margin-top: 7%;color : black"><h1 style =" color : #ab1025">Competitive Fight Club</h1><p  style="margin-top: 2%;"> <h2>Welcome to our fight club </h2> <br><h3>Please use this code to confirm your <strong style="color: red;"> ' + req.body.name + ' </strong> account</h3><br><h2> The Code : </h2><br><div style="width: 10%;height: 5%;margin: 1% auto;"><h2>' + code + '</h2><br></div>and thank you for signing up</p></div>'
+        }
+        user = req.body
+        client.hmset(code, user, (err, reply) => {
+            if (err)
+                return res.status(404).json({
+                    msg: err
+                })
         })
+
+        client.expire(code, 600000)
+
+        transporter.sendMail(options, (err, result) => {
+            if (err)
+                return res.status(404).json({
+                    msg: err
+                })
+        })
+
+        return res.status(200).json({
+            msg: 'Please confirm your account'
+        })
+
 
     } catch (error) {
         res.status(404).json({
@@ -86,7 +135,42 @@ exports.addUser = async function (req, res) {
     }
 }
 
-exports.deleteUser = async function (req, res) {
+exports.confirm = async (req, res) => {
+    try {
+
+        client.hgetall(req.body.code, async (err, reply) => {
+            if (err)
+                return res.status(404), json({
+                    msg: err
+                })
+            if (reply == null) {
+                return res.status(200).json({
+                    msg: 'Verification failed \nPlease re-try'
+                })
+            } else {
+                if (req.body.name != reply.name)
+                    return res.status(200).json({
+                        msg: 'Verification failed \nPlease re-try'
+                    })
+                await User.create(reply)
+                let token = jwt.sign({_id : reply._id , name : reply.name} , process.env.TOKEN)
+                let user = await User.findOne({ name: req.body.name }).select('-password -__v').populate({ path: 'friend.friend_id', select: 'name rate -_id' }).populate({ path: 'received_friend.friend_id', select: 'name rate -_id' })
+                return res.status(200).json({
+                    msg: 'Account has been verified',
+                    user: user,
+                    token : token
+                })
+            }
+        })
+    } catch (error) {
+        return res.status(404).json({
+            status: 'Error',
+            msg: error.message
+        })
+    }
+}
+
+exports.deleteUser = async (req, res) => {
     try {
         const user = await User.findOneAndDelete({ name: req.body.name })
         if (!user) {
@@ -105,7 +189,7 @@ exports.deleteUser = async function (req, res) {
     }
 }
 
-exports.editRate = async function (req, res) {
+exports.editRate = async (req, res) => {
     try {
         const user = await User.findOneAndUpdate({ name: req.body.name }, {
             $inc: {
