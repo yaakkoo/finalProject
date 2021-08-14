@@ -28,13 +28,13 @@ const UserSchema = new mongoose.Schema({
     name: String,
 
     email: String,
-    
+
     profile_pic: String,
-    
+
     password: String,
-    
+
     rate: Number,
-    
+
     win: Number,
 
     lose: Number,
@@ -60,7 +60,7 @@ const UserSchema = new mongoose.Schema({
 })
 
 
-UserSchema.pre('save', function (next) {
+UserSchema.pre('save', (next) => {
     var user = this;
     // only hash the password if it has been modified (or is new)
     if (!user.isModified('password')) return next();
@@ -77,6 +77,7 @@ UserSchema.pre('save', function (next) {
         });
     });
 });
+
 
 const User = mongoose.model(
     "Users",

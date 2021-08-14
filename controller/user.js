@@ -1,8 +1,9 @@
 const jwt = require('jsonwebtoken');
 const User = require('../model/user');
 const redis = require('redis');
-let client = redis.createClient()
 const nodemailer = require('nodemailer')
+const bcryptjs = require('bcryptjs');
+let client = redis.createClient()
 
 
 const transporter = nodemailer.createTransport({
@@ -106,14 +107,12 @@ exports.addUser = async (req, res) => {
             html: '<div style="text-align: center; margin-top: 7%;color : black"><h1 style =" color : #ab1025">Competitive Fight Club</h1><p  style="margin-top: 2%;"> <h2>Welcome to our fight club </h2> <br><h3>Please use this code to confirm your <strong style="color: red;"> ' + req.body.name + ' </strong> account</h3><br><h2> The Code : </h2><br><div style="width: 10%;height: 5%;margin: 1% auto;"><h2>' + code + '</h2><br></div>and thank you for signing up</p></div>'
         }
         user = req.body
-        client.hmset(code, user, (err, reply) => {
+        client.setex(code, 3600 ,user, (err, reply) => {
             if (err)
                 return res.status(404).json({
                     msg: err
                 })
         })
-
-        client.expire(code, 600000)
 
         transporter.sendMail(options, (err, result) => {
             if (err)
@@ -153,12 +152,12 @@ exports.confirm = async (req, res) => {
                         msg: 'Verification failed \nPlease re-try'
                     })
                 await User.create(reply)
-                let token = jwt.sign({_id : reply._id , name : reply.name} , process.env.TOKEN)
+                let token = jwt.sign({ _id: reply._id, name: reply.name }, process.env.TOKEN)
                 let user = await User.findOne({ name: req.body.name }).select('-password -__v').populate({ path: 'friend.friend_id', select: 'name rate -_id' }).populate({ path: 'received_friend.friend_id', select: 'name rate -_id' })
                 return res.status(200).json({
                     msg: 'Account has been verified',
                     user: user,
-                    token : token
+                    token: token
                 })
             }
         })
@@ -311,6 +310,83 @@ exports.availableFriends = async (req, res) => {
     } catch (error) {
         return res.status(404).json({
             status: 'Error',
+            msg: error.message
+        })
+    }
+}
+
+exports.resetPassword = async (req, res) => {
+    try {
+        let user = await User.findOne({ name: req.body.name }).select('name email')
+
+        client.on('connect', () => {
+            console.log('connected to redis');
+        })
+
+        client.on('error', (err) => {
+            console.log(err);
+        })
+
+        let code = Math.floor(Math.random() * 9999999999)
+
+        const options = {
+            from: 'CompetitiveFightClub@outlook.com',
+            to: user.email,
+            subject: 'Confirm your account',
+            html: '<div style="text-align: center; margin-top: 7%;color : black"><h1 style =" color : #ab1025">Competitive Fight Club</h1><p  style="margin-top: 2%;"> <h2>Welcome to our fight club </h2> <br><h3>Please use this link to reset your <strong style="color: red;"> ' + req.body.name + ' </strong> password</h3><br><h2> The Link : </h2><br><div style="width: 10%;height: 5%;margin: 1% auto;"><h2> http://localhost/3000/user/changePassword/' + code + '</h2><br></div>The support team ... <3 </p></div>'
+        }
+
+        client.setex(code,3600 ,{ name: user.name }, (err, reply) => {
+            if (err) {
+                return res.status(404).json({
+                    status: "error",
+                    msg: err
+                })
+            }
+        })
+
+        transporter.sendMail(options, (err, result) => {
+            if (err)
+                return res.status(404).json({
+                    msg: err
+                })
+        })
+
+        return res.status(200).json({
+            msg: 'Please check your email for a link'
+        })
+    } catch (error) {
+        return res.status(404).json({
+            msg: error.message
+        })
+    }
+}
+
+exports.changePassword = async (req, res) => {
+    try {
+
+        client.hgetall(req.params.id, async (err, reply) => {
+            if (err)
+                return res.status(404).json({
+                    msg: 'This link expired or wrong link'
+                })
+            let password = req.body.password
+
+            const saltRound = 5;
+            const salt = await bcryptjs.genSalt(saltRound);
+            password = await bcryptjs.hash(password, salt);
+            console.log(password);
+            let user = await User.findOneAndUpdate({ name: reply.name }, {
+                $set: {
+                    password: password
+                }
+            })
+            return res.status(200).json({
+                msg: 'Password changed successfully'
+            })
+        })
+    } catch (error) {
+        return res.status(404).json({
             msg: error.message
         })
     }
