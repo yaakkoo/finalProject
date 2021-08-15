@@ -107,7 +107,7 @@ exports.addUser = async (req, res) => {
             html: '<div style="text-align: center; margin-top: 7%;color : black"><h1 style =" color : #ab1025">Competitive Fight Club</h1><p  style="margin-top: 2%;"> <h2>Welcome to our fight club </h2> <br><h3>Please use this code to confirm your <strong style="color: red;"> ' + req.body.name + ' </strong> account</h3><br><h2> The Code : </h2><br><div style="width: 10%;height: 5%;margin: 1% auto;"><h2>' + code + '</h2><br></div>and thank you for signing up</p></div>'
         }
         user = req.body
-        client.setex(code, 3600 ,user, (err, reply) => {
+        client.setex(code, 3600, user, (err, reply) => {
             if (err)
                 return res.status(404).json({
                     msg: err
@@ -315,7 +315,7 @@ exports.availableFriends = async (req, res) => {
     }
 }
 
-exports.resetPassword = async (req, res) => {
+exports.forgetPassword = async (req, res) => {
     try {
         let user = await User.findOne({ name: req.body.name }).select('name email')
 
@@ -336,7 +336,7 @@ exports.resetPassword = async (req, res) => {
             html: '<div style="text-align: center; margin-top: 7%;color : black"><h1 style =" color : #ab1025">Competitive Fight Club</h1><p  style="margin-top: 2%;"> <h2>Welcome to our fight club </h2> <br><h3>Please use this link to reset your <strong style="color: red;"> ' + req.body.name + ' </strong> password</h3><br><h2> The Link : </h2><br><div style="width: 10%;height: 5%;margin: 1% auto;"><h2> http://localhost/3000/user/changePassword/' + code + '</h2><br></div>The support team ... <3 </p></div>'
         }
 
-        client.setex(code,3600 ,{ name: user.name }, (err, reply) => {
+        client.setex(code, 3600, { name: user.name }, (err, reply) => {
             if (err) {
                 return res.status(404).json({
                     status: "error",
@@ -362,7 +362,7 @@ exports.resetPassword = async (req, res) => {
     }
 }
 
-exports.changePassword = async (req, res) => {
+exports.setPassword = async (req, res) => {
     try {
 
         client.hgetall(req.params.id, async (err, reply) => {
@@ -375,7 +375,7 @@ exports.changePassword = async (req, res) => {
             const saltRound = 5;
             const salt = await bcryptjs.genSalt(saltRound);
             password = await bcryptjs.hash(password, salt);
-            console.log(password);
+
             let user = await User.findOneAndUpdate({ name: reply.name }, {
                 $set: {
                     password: password
@@ -387,6 +387,38 @@ exports.changePassword = async (req, res) => {
         })
     } catch (error) {
         return res.status(404).json({
+            msg: error.message
+        })
+    }
+}
+
+exports.editPassword = async (req, res) => {
+    try {
+        let user = await User.findOne({ name: req.body.name })
+        let chack = await bcryptjs.compare(user.password, req.body.oldPassword)
+        if (!check) {
+            return res.status(200).json({
+                msg: 'Wrong password'
+            })
+        }
+
+        const saltRound = 5;
+        const salt = await bcryptjs.genSalt(saltRound);
+        password = await bcryptjs.hash(req.body.newPassword, salt);
+
+        await User.findByIdAndUpdate({ name: req.body.name }, {
+            $set: {
+                password: password
+            }
+        })
+
+        return res.status(200).json({
+            msg : 'Password changed successfully'
+        })
+
+    } catch (error) {
+        return res.status(404).json({
+            status: "Error",
             msg: error.message
         })
     }
