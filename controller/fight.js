@@ -9,9 +9,9 @@ exports.getMatchInfo = async (req, res) => {
             return res.status(200).json({
                 match_info: match
             })
-            else return res.status(404).json({
-                msg : 'no such match'
-            })
+        else return res.status(404).json({
+            msg: 'no such match'
+        })
     } catch (error) {
         return res.status(404).json({
             msg: error.message
@@ -145,6 +145,17 @@ exports.randomMatch = async (req, res) => {
         else {
             let noti = await sendNoti(req.body.sender, receiver[i].name, req.body.difficulty)
             if (noti === 'sent') {
+                let n_problems = await getProblems(req.body.rate1, req.body.rate2)
+                if (n_problems == 'error')
+                    return res.status(404).json({
+                        msg: 'error in getting problems'
+                    })
+                let fight = {
+                    user1: sender._id,
+                    user2: receiver[i]._id,
+                    problems: n_problems
+                }
+                await Fight.create(fight)
                 return res.status(200).json({
                     msg: "Notification sent to " + receiver[i].name + " \ndiffeculty : " + req.body.difficulty
                 })
