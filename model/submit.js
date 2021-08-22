@@ -16,6 +16,10 @@ const submitSchema = new mongoose.Schema({
     status: {
         type: String,
         required: true
+    },
+    match : {
+        type: mongoose.Schema.Types.ObjectId,
+        ref : "Matches"
     }
 })
 
