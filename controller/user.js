@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
 exports.getUser = async (req, res) => {
     try {
         let users = await User.find({ online: true }).select('-password -__v').populate({ path: 'friend.friend_id', select: 'name rate -_id' }).populate({ path: 'received_friend.friend_id', select: 'name rate -_id' })
-
+        console.log(req.body.match);
         return res.status(200).json({
             users
         })
@@ -413,7 +413,7 @@ exports.editPassword = async (req, res) => {
         })
 
         return res.status(200).json({
-            msg : 'Password changed successfully'
+            msg: 'Password changed successfully'
         })
 
     } catch (error) {
