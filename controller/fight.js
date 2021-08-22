@@ -188,7 +188,7 @@ exports.endFight = async (req, res) => {
                 uuid: ''
             }
         })
-        await Fight.findOneAndDelete({ user1: sender._id, user2: receiver._id })
+        await Fight.findOneAndDelete({ $or: [{ user1: sender._id }, { user2: sender._id }] })
         return res.status(200).json({
             msg: "Match ended"
         })
