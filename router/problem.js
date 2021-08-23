@@ -4,7 +4,7 @@ require('express-async-error')
 const router = express.Router();
 
 router.post('/addProblem' , addProblem)
-router.get('/getProblem' , getProblem)
-router.get('/getProblemCode' , getProblemCode)
+router.post('/getProblem' , getProblem)
+router.post('/getProblemCode' , getProblemCode)
 
 module.exports = router

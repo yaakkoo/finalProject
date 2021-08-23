@@ -4,9 +4,9 @@ require('express-async-error')
 const router = express.Router();
 const { Auth } = require('../middleware/middleware')
 
-router.get('/getStatusUser', Auth, getStatusUser)
-router.get('/getStatus', Auth, getStatus)
-router.get('/getStatus', Auth, getMatchStatus)
-router.get('/getStatus', Auth, getMatchStatusPro)
+router.post('/getStatusUser', Auth, getStatusUser)
+router.post('/getStatus', Auth, getStatus)
+router.post('/getStatus', Auth, getMatchStatus)
+router.post('/getStatus', Auth, getMatchStatusPro)
 
 module.exports = router

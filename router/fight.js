@@ -10,5 +10,5 @@ router.post('/friendMatch', Auth, friendMatch)
 router.post('/decline', Auth, decline)
 router.post('/accept', Auth, accept)
 router.post('/endFight', Auth, endFight)
-router.get('/getMatchInfo',Auth , getMatchInfo)
+router.post('/getMatchInfo',Auth , getMatchInfo)
 module.exports = router

@@ -6,18 +6,18 @@ const bcryptjs = require('bcryptjs');
 let client = redis.createClient()
 
 
-const transporter = nodemailer.createTransport({
-    service: 'hotmail',
+let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    tls : true ,
     auth: {
-        user: 'CompetitiveFightClub@outlook.com',
-        pass: '1011001@yY'
+        user: 'competitivefightclub@gmail.com',
+        pass: '@@@123@@@'
     }
 })
 
 exports.getUser = async (req, res) => {
     try {
         let users = await User.find({ online: true }).select('-password -__v').populate({ path: 'friend.friend_id', select: 'name rate -_id' }).populate({ path: 'received_friend.friend_id', select: 'name rate -_id' })
-        console.log(req.body.match);
         return res.status(200).json({
             users
         })
@@ -64,8 +64,6 @@ exports.getUserId = async (req, res) => {
 
 exports.addUser = async (req, res) => {
     try {
-
-
         client.on('connect', () => {
             console.log('connected to redis');
         })
@@ -101,24 +99,35 @@ exports.addUser = async (req, res) => {
         let code = Math.floor(Math.random() * 9999)
 
         const options = {
-            from: 'CompetitiveFightClub@outlook.com',
+            from: 'CompetitiveFightClub@gmail.com',
             to: req.body.email,
             subject: 'Confirm your account',
             html: '<div style="text-align: center; margin-top: 7%;color : black"><h1 style =" color : #ab1025">Competitive Fight Club</h1><p  style="margin-top: 2%;"> <h2>Welcome to our fight club </h2> <br><h3>Please use this code to confirm your <strong style="color: red;"> ' + req.body.name + ' </strong> account</h3><br><h2> The Code : </h2><br><div style="width: 10%;height: 5%;margin: 1% auto;"><h2>' + code + '</h2><br></div>and thank you for signing up</p></div>'
         }
         user = req.body
-        client.setex(code, 3600, user, (err, reply) => {
+
+        client.hmset(code, user, (err, reply) => {
             if (err)
                 return res.status(404).json({
-                    msg: err
+                    msg: err,
+                    err: err.message
+                })
+        })
+
+        client.expire(code, 3600, (err, reply) => {
+            if (err)
+                return res.status(404).json({
+                    msg: err,
+                    err: err.message
                 })
         })
 
         transporter.sendMail(options, (err, result) => {
-            if (err)
+            if (err){
                 return res.status(404).json({
-                    msg: err
-                })
+                    msg: err,
+                    err : err.message
+                })}
         })
 
         return res.status(200).json({
@@ -330,7 +339,7 @@ exports.forgetPassword = async (req, res) => {
         let code = Math.floor(Math.random() * 9999999999)
 
         const options = {
-            from: 'CompetitiveFightClub@outlook.com',
+            from: 'CompetitiveFightClub@gmail.com',
             to: user.email,
             subject: 'Confirm your account',
             html: '<div style="text-align: center; margin-top: 7%;color : black"><h1 style =" color : #ab1025">Competitive Fight Club</h1><p  style="margin-top: 2%;"> <h2>Welcome to our fight club </h2> <br><h3>Please use this link to reset your <strong style="color: red;"> ' + req.body.name + ' </strong> password</h3><br><h2> The Link : </h2><br><div style="width: 10%;height: 5%;margin: 1% auto;"><h2> http://localhost/3000/user/changePassword/' + code + '</h2><br></div>The support team ... <3 </p></div>'

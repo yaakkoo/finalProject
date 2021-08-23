@@ -12,7 +12,8 @@ const fight = new mongoose.Schema({
     },
     problems: {
         type: [String]
-    }
+    },
+    uuid : String
 })
 
 const Fight = mongoose.model(
