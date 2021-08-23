@@ -20,6 +20,6 @@ router.post('/image', Auth, image)
 router.post('/availableFriends', Auth, availableFriends)
 router.post('/forgetPassword' ,forgetPassword)
 router.post('/setPassword/:id',setPassword)
-router.post('/editPassword' , Auth , editPassword)
+router.post('/editPassword',Auth  , editPassword)
 
 module.exports = router;

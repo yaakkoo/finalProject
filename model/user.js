@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const bcryptjs = require('bcryptjs');
 
 
+
 const friendSchema = new mongoose.Schema(
     {
         friend_id: {
@@ -31,7 +32,12 @@ const UserSchema = new mongoose.Schema({
 
     profile_pic: String,
 
-    password: String,
+    password: {
+        type: String,
+        required: true,
+        trim: true,
+        set: (val) => (val ? bcryptjs.hashSync(val, 10) : undefined)
+    },
 
     rate: Number,
 
@@ -58,26 +64,6 @@ const UserSchema = new mongoose.Schema({
     uuid: String,
 
 })
-
-
-UserSchema.pre('save', (next) => {
-    var user = this;
-    // only hash the password if it has been modified (or is new)
-    if (!user.isModified('password')) return next();
-    // generate a salt
-    bcryptjs.genSalt(5, function (err, salt) {
-        if (err) return next(err);
-        user.salt = salt;
-        // hash the password using our new salt
-        bcryptjs.hash(user.password, salt, function (err, hash) {
-            if (err) return next(err);
-            // override the cleartext password with the hashed one
-            user.password = hash;
-            next();
-        });
-    });
-});
-
 
 const User = mongoose.model(
     "Users",

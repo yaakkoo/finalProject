@@ -3,12 +3,14 @@ const User = require('../model/user');
 const redis = require('redis');
 const nodemailer = require('nodemailer')
 const bcryptjs = require('bcryptjs');
+const cloudinary = require('cloudinary')
+
 let client = redis.createClient()
 
 
 let transporter = nodemailer.createTransport({
     service: 'gmail',
-    tls : true ,
+    tls: true,
     auth: {
         user: 'competitivefightclub@gmail.com',
         pass: '@@@123@@@'
@@ -123,11 +125,12 @@ exports.addUser = async (req, res) => {
         })
 
         transporter.sendMail(options, (err, result) => {
-            if (err){
+            if (err) {
                 return res.status(404).json({
                     msg: err,
-                    err : err.message
-                })}
+                    err: err.message
+                })
+            }
         })
 
         return res.status(200).json({
@@ -160,9 +163,10 @@ exports.confirm = async (req, res) => {
                     return res.status(200).json({
                         msg: 'Verification failed \nPlease re-try'
                     })
-                await User.create(reply)
+
+                let user = await User.create(reply)
                 let token = jwt.sign({ _id: reply._id, name: reply.name }, process.env.TOKEN)
-                let user = await User.findOne({ name: req.body.name }).select('-password -__v').populate({ path: 'friend.friend_id', select: 'name rate -_id' }).populate({ path: 'received_friend.friend_id', select: 'name rate -_id' })
+                user = await User.findOne({ name: req.body.name }).select('-password -__v').populate({ path: 'friend.friend_id', select: 'name rate -_id' }).populate({ path: 'received_friend.friend_id', select: 'name rate -_id' })
                 return res.status(200).json({
                     msg: 'Account has been verified',
                     user: user,
@@ -272,8 +276,8 @@ exports.online = async (req, res) => {
 
 exports.image = async (req, res) => {
     try {
-        console.log(req)
-        cloudinary.uploader.upload(req.files.profile.tempFilePath, async (err, result) => {
+        cloudinary.uploader.upload(req.files.profile.tempFilePath, async (result, err) => {
+
             if (typeof (err) !== 'undefined') {
                 return res.status(404).json({
                     Error: err
@@ -293,7 +297,7 @@ exports.image = async (req, res) => {
     } catch (error) {
         return res.status(404).json({
             status: 'Error',
-            msg: error
+            msg: error.message
         })
     }
 
@@ -379,11 +383,6 @@ exports.setPassword = async (req, res) => {
                 return res.status(404).json({
                     msg: 'This link expired or wrong link'
                 })
-            let password = req.body.password
-
-            const saltRound = 5;
-            const salt = await bcryptjs.genSalt(saltRound);
-            password = await bcryptjs.hash(password, salt);
 
             let user = await User.findOneAndUpdate({ name: reply.name }, {
                 $set: {
@@ -404,20 +403,15 @@ exports.setPassword = async (req, res) => {
 exports.editPassword = async (req, res) => {
     try {
         let user = await User.findOne({ name: req.body.name })
-        let chack = await bcryptjs.compare(user.password, req.body.oldPassword)
+        const check = await bcryptjs.compare(req.body.oldPassword, user.password);
         if (!check) {
-            return res.status(200).json({
-                msg: 'Wrong password'
+            return res.status(404).json({
+                msg: 'Wrong Username or Password '
             })
         }
-
-        const saltRound = 5;
-        const salt = await bcryptjs.genSalt(saltRound);
-        password = await bcryptjs.hash(req.body.newPassword, salt);
-
-        await User.findByIdAndUpdate({ name: req.body.name }, {
+        await User.findOneAndUpdate({ name: req.body.name }, {
             $set: {
-                password: password
+                password: req.body.newPassword
             }
         })
 
