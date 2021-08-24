@@ -64,7 +64,7 @@ exports.getUserId = async (req, res) => {
     }
 }
 
-exports.addUser = async (req, res) => {
+exports.signUp = async (req, res) => {
     try {
         client.on('connect', () => {
             console.log('connected to redis');
@@ -97,7 +97,6 @@ exports.addUser = async (req, res) => {
         user.email = req.body.email
         user.password = req.body.password
         user.admin = req.body.admin
-
         let code = Math.floor(Math.random() * 9999)
 
         const options = {
@@ -106,33 +105,30 @@ exports.addUser = async (req, res) => {
             subject: 'Confirm your account',
             html: '<div style="text-align: center; margin-top: 7%;color : black"><h1 style =" color : #ab1025">Competitive Fight Club</h1><p  style="margin-top: 2%;"> <h2>Welcome to our fight club </h2> <br><h3>Please use this code to confirm your <strong style="color: red;"> ' + req.body.name + ' </strong> account</h3><br><h2> The Code : </h2><br><div style="width: 10%;height: 5%;margin: 1% auto;"><h2>' + code + '</h2><br></div>and thank you for signing up</p></div>'
         }
-        user = req.body
+        let data = JSON.stringify(user);
 
-        client.hmset(code, user, (err, reply) => {
-            if (err)
+        client.setex(code, 3600, data, (err, reply) => {
+            if (err) {
+                console.log("err");
                 return res.status(404).json({
-                    msg: err,
-                    err: err.message
+                    error : err
                 })
-        })
-
-        client.expire(code, 3600, (err, reply) => {
-            if (err)
-                return res.status(404).json({
-                    msg: err,
-                    err: err.message
-                })
+            }
+            else {
+                console.log(reply);
+            }
         })
 
         transporter.sendMail(options, (err, result) => {
             if (err) {
+                console.log("mail");
                 return res.status(404).json({
                     msg: err,
                     err: err.message
                 })
             }
         })
-
+        console.log("end");
         return res.status(200).json({
             msg: 'Please confirm your account'
         })
@@ -148,10 +144,9 @@ exports.addUser = async (req, res) => {
 
 exports.confirm = async (req, res) => {
     try {
-
-        client.hgetall(req.body.code, async (err, reply) => {
+        client.get(req.body.code, async (err, reply) => {
             if (err)
-                return res.status(404), json({
+                return res.status(404).json({
                     msg: err
                 })
             if (reply == null) {
@@ -159,13 +154,15 @@ exports.confirm = async (req, res) => {
                     msg: 'Verification failed \nPlease re-try'
                 })
             } else {
-                if (req.body.name != reply.name)
+                let data = JSON.parse(reply)
+                console.log({reply : data});
+                if (req.body.name != data.name)
                     return res.status(200).json({
                         msg: 'Verification failed \nPlease re-try'
                     })
 
-                let user = await User.create(reply)
-                let token = jwt.sign({ _id: reply._id, name: reply.name }, process.env.TOKEN)
+                let user = await User.create(data)
+                let token = jwt.sign({ _id: data._id, name: data.name }, process.env.TOKEN)
                 user = await User.findOne({ name: req.body.name }).select('-password -__v').populate({ path: 'friend.friend_id', select: 'name rate -_id' }).populate({ path: 'received_friend.friend_id', select: 'name rate -_id' })
                 return res.status(200).json({
                     msg: 'Account has been verified',
@@ -378,7 +375,7 @@ exports.forgetPassword = async (req, res) => {
 exports.setPassword = async (req, res) => {
     try {
 
-        client.hgetall(req.params.id, async (err, reply) => {
+        client.get(req.params.id, async (err, reply) => {
             if (err)
                 return res.status(404).json({
                     msg: 'This link expired or wrong link'
