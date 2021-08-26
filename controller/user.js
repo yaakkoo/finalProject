@@ -149,25 +149,6 @@ exports.confirm = async (req, res) => {
     }
 }
 
-exports.deleteUser = async (req, res) => {
-    try {
-        const user = await User.findOneAndDelete({ name: req.body.name })
-        if (!user) {
-            return res.status(404).json({
-                msg: 'This user is not Existed'
-            })
-        }
-        return res.status(200).json({
-            msg: 'User Deleted Successfully'
-        });
-    } catch (error) {
-        res.status(404).json({
-            status: 'Error',
-            msg: error.message
-        })
-    }
-}
-
 exports.editRate = async (req, res) => {
     try {
         const user = await User.findOneAndUpdate({ name: req.body.name }, {
@@ -299,31 +280,18 @@ exports.forgetPassword = async (req, res) => {
     try {
         let user = await User.findOne({ name: req.body.name }).select('name email')
 
-        client.on('connect', () => {
-            console.log('connected to redis');
-        })
-
-        client.on('error', (err) => {
-            console.log(err);
-        })
-
         let code = Math.floor(Math.random() * 9999999999)
 
         const options = {
             from: 'CompetitiveFightClub@gmail.com',
             to: user.email,
             subject: 'Confirm your account',
-            html: '<div style="text-align: center; margin-top: 7%;color : black"><h1 style =" color : #ab1025">Competitive Fight Club</h1><p  style="margin-top: 2%;"> <h2>Welcome to our fight club </h2> <br><h3>Please use this link to reset your <strong style="color: red;"> ' + req.body.name + ' </strong> password</h3><br><h2> The Link : </h2><br><div style="width: 10%;height: 5%;margin: 1% auto;"><h2> http://localhost/3000/user/changePassword/' + code + '</h2><br></div>The support team ... <3 </p></div>'
+            html: '<div style="text-align: center; margin-top: 7%;color : black"><h1 style =" color : #ab1025">Competitive Fight Club</h1><p  style="margin-top: 2%;"> <h2>Welcome to our fight club </h2> <br><h3>Please use this link to reset your <strong style="color: red;"> ' + req.body.name + ' </strong> password</h3><br><h2> The Link : </h2><br><div style="width: 10%;height: 5%;margin: 1% auto;"><h2> http://localhost:3000/user/changePassword/' + code + '</h2><br></div>The support team ... <3 </p></div>'
         }
-
-        client.setex(code, 3600, { name: user.name }, (err, reply) => {
-            if (err) {
-                return res.status(404).json({
-                    status: "error",
-                    msg: err
-                })
-            }
-        })
+        let data = {}
+        data.user = user.name
+        data.code = code
+        await Temp.create(data)
 
         transporter.sendMail(options, (err, result) => {
             if (err)
@@ -344,21 +312,19 @@ exports.forgetPassword = async (req, res) => {
 
 exports.setPassword = async (req, res) => {
     try {
-
-        client.get(req.params.id, async (err, reply) => {
-            if (err)
-                return res.status(404).json({
-                    msg: 'This link expired or wrong link'
-                })
-
-            let user = await User.findOneAndUpdate({ name: reply.name }, {
-                $set: {
-                    password: password
-                }
-            })
+        console.log(123);
+        let user = await Temp.findOneAndDelete({ code: req.params.id })
+        if (!user)
             return res.status(200).json({
-                msg: 'Password changed successfully'
+                msg: "Verification wrong"
             })
+        await User.findOneAndUpdate({ name: req.body.name }, {
+            $set: {
+                password: req.body.password
+            }
+        })
+        return res.status(200).json({
+            msg: 'Password changed successfully'
         })
     } catch (error) {
         return res.status(404).json({
