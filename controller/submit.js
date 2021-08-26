@@ -28,7 +28,7 @@ exports.getStatus = async (req, res) => {
 
 exports.getMatchStatusPro = async (req,res) => {
     try {
-        const submit = await Submit.find({match : req.body.matchId , p_code : req.body.p_code}).populate({ path: 'match', select: 'problems user1 user2' })
+        const submit = await Submit.find({match : req.body.matchId,name : req.body.name , p_code : req.body.p_code}).populate({ path: 'match', select: 'problems user1 user2' })
         res.status(200).json({
             submit: submit
         })

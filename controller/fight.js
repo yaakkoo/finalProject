@@ -177,13 +177,13 @@ exports.randomMatch = async (req, res) => {
 
 exports.endFight = async (req, res) => {
     try {
-        let sender = await User.findOneAndUpdate({ name: req.body.sender }, {
+        let sender = await User.findOneAndUpdate({ _id: req.body.sender }, {
             $set: {
                 inFight: false,
                 uuid: ''
             }
         })
-        let receiver = await User.findOneAndUpdate({ name: req.body.receiver }, {
+        let receiver = await User.findOneAndUpdate({ _id: req.body.receiver }, {
             $set: {
                 inFight: false,
                 uuid: ''
