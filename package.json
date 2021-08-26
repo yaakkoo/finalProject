@@ -4,7 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev" : "nodemone index.js"
+  },
+  "engines": {
+    "node": "14.16.1",
+    "npm" : "7.16.0"
   },
   "author": "",
   "license": "ISC",

@@ -4,7 +4,7 @@ const User = require("../model/user")
 
 exports.getMatchInfo = async (req, res) => {
     try {
-        let match = await Fight.findOne({uuid : req.body.uuid}).populate({ path: 'user1', select: 'name rate _id' }).populate(({ path: 'user2', select: 'name rate _id' }))
+        let match = await Fight.findOne({ uuid: req.body.uuid }).populate({ path: 'user1', select: 'name rate _id' }).populate(({ path: 'user2', select: 'name rate _id' }))
         if (match)
             return res.status(200).json({
                 match_info: match
@@ -118,7 +118,7 @@ exports.accept = async (req, res) => {
             user1: sender._id,
             user2: receiver._id,
             problems: n_problems,
-            uuid : req.body.uuid
+            uuid: req.body.uuid
         }
         await Fight.create(fight)
         return res.status(200).json({
@@ -206,7 +206,7 @@ async function sendNoti(senderName, receiverName, difficulty) {
     try {
         let sender = await User.findOneAndUpdate({ name: senderName }, {
             $push: {
-                sent_notification: receiverName + " \ndiffeculty : " + difficulty
+                sent_notification: receiverName + " diffeculty : " + difficulty
             }
         })
 
