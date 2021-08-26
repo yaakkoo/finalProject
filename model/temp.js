@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const temp = new mongoose.Schema({
-    code: number,
+    code: Number,
     user: String
 })
 

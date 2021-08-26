@@ -21,6 +21,6 @@ router.post('/availableFriends', Auth, availableFriends)
 router.post('/forgetPassword' ,forgetPassword)
 router.post('/setPassword/:id',setPassword)
 router.post('/editPassword',Auth  , editPassword)
-router.post('/search',Auth  , search)
+router.post('/search'  , search)
 
 module.exports = router;

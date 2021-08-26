@@ -89,7 +89,7 @@ exports.signUp = async (req, res) => {
         user.email = req.body.email
         user.password = req.body.password
         user.admin = req.body.admin
-        let code = Math.floor(Math.random() * 9999)
+        let code = Math.floor(Math.random() * 99999999)
 
         const options = {
             from: 'CompetitiveFightClub@gmail.com',
@@ -98,9 +98,10 @@ exports.signUp = async (req, res) => {
             html: '<div style="text-align: center; margin-top: 7%;color : black"><h1 style =" color : #ab1025">Competitive Fight Club</h1><p  style="margin-top: 2%;"> <h2>Welcome to our fight club </h2> <br><h3>Please use this code to confirm your <strong style="color: red;"> ' + req.body.name + ' </strong> account</h3><br><h2> The Code : </h2><br><div style="width: 10%;height: 5%;margin: 1% auto;"><h2>' + code + '</h2><br></div>and thank you for signing up</p></div>'
         }
         let data = JSON.stringify(user);
-
-
-
+        user = {}
+        user.code = code
+        user.user = data
+        await Temp.create(user)
         transporter.sendMail(options, (err, result) => {
             if (err) {
                 console.log("mail");
@@ -110,7 +111,6 @@ exports.signUp = async (req, res) => {
                 })
             }
         })
-        console.log("end");
         return res.status(200).json({
             msg: 'Please confirm your account'
         })
@@ -126,32 +126,20 @@ exports.signUp = async (req, res) => {
 
 exports.confirm = async (req, res) => {
     try {
-        client.get(req.body.code, async (err, reply) => {
-            if (err)
-                return res.status(404).json({
-                    msg: err
-                })
-            if (reply == null) {
-                return res.status(200).json({
-                    msg: 'Verification failed \nPlease re-try'
-                })
-            } else {
-                let data = JSON.parse(reply)
-                console.log({ reply: data });
-                if (req.body.name != data.name)
-                    return res.status(200).json({
-                        msg: 'Verification failed \nPlease re-try'
-                    })
 
-                let user = await User.create(data)
-                let token = jwt.sign({ _id: data._id, name: data.name }, process.env.TOKEN)
-                user = await User.findOne({ name: req.body.name }).select('-password -__v').populate({ path: 'friend.friend_id', select: 'name rate -_id' }).populate({ path: 'received_friend.friend_id', select: 'name rate -_id' })
-                return res.status(200).json({
-                    msg: 'Account has been verified',
-                    user: user,
-                    token: token
-                })
-            }
+        let data = await Temp.findOneAndDelete({ code: req.body.code }).select('user')
+        if (!data) {
+            return res.status(200).json({
+                msg: "Wrong code"
+            })
+        }
+        data = JSON.parse(data.user)
+        let user = await User.create(data)
+        let token = jwt.sign({ _id: data._id, name: data.name }, process.env.TOKEN)
+        user = await User.findOne({ name: req.body.name }).select('-password -__v').populate({ path: 'friend.friend_id', select: 'name rate -_id' }).populate({ path: 'received_friend.friend_id', select: 'name rate -_id' })
+        return res.status(200).json({
+            msg: 'Account has been verified',
+            token: token
         })
     } catch (error) {
         return res.status(404).json({
@@ -408,7 +396,7 @@ exports.editPassword = async (req, res) => {
 
 exports.search = async (req, res) => {
     try {
-        let user = await User.find({ name: { $regex: req.body.name } })
+        let user = await User.find({ name: { $regex: req.body.name } }).select('name')
         if (user)
             return res.status(200).json({
                 user
