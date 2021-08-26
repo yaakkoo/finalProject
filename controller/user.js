@@ -1,11 +1,10 @@
 const jwt = require('jsonwebtoken');
 const User = require('../model/user');
-const redis = require('redis');
 const nodemailer = require('nodemailer')
 const bcryptjs = require('bcryptjs');
-const cloudinary = require('cloudinary')
+const cloudinary = require('cloudinary');
+const { Temp } = require('../model/temp');
 
-let client = redis.createClient(1234)
 
 
 let transporter = nodemailer.createTransport({
@@ -66,13 +65,6 @@ exports.getUserId = async (req, res) => {
 
 exports.signUp = async (req, res) => {
     try {
-        client.on('connect', () => {
-            console.log('connected to redis');
-        })
-
-        client.on('error', (err) => {
-            console.log(err);
-        })
 
         let user = await User.findOne({ name: req.body.name })
         if (user) {
@@ -107,17 +99,7 @@ exports.signUp = async (req, res) => {
         }
         let data = JSON.stringify(user);
 
-        client.setex(code, 3600, data, (err, reply) => {
-            if (err) {
-                console.log("err");
-                return res.status(404).json({
-                    error : err
-                })
-            }
-            else {
-                console.log(reply);
-            }
-        })
+
 
         transporter.sendMail(options, (err, result) => {
             if (err) {
@@ -155,7 +137,7 @@ exports.confirm = async (req, res) => {
                 })
             } else {
                 let data = JSON.parse(reply)
-                console.log({reply : data});
+                console.log({ reply: data });
                 if (req.body.name != data.name)
                     return res.status(200).json({
                         msg: 'Verification failed \nPlease re-try'
@@ -416,6 +398,25 @@ exports.editPassword = async (req, res) => {
             msg: 'Password changed successfully'
         })
 
+    } catch (error) {
+        return res.status(404).json({
+            status: "Error",
+            msg: error.message
+        })
+    }
+}
+
+exports.search = async (req, res) => {
+    try {
+        let user = await User.find({ name: { $regex: req.body.name } })
+        if (user)
+            return res.status(200).json({
+                user
+            })
+        else
+            return res.status(200).json({
+                msg: "No such user"
+            })
     } catch (error) {
         return res.status(404).json({
             status: "Error",
