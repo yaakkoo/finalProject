@@ -3,14 +3,27 @@ const User = require("../model/user")
 
 exports.addFriend = async (req, res) => {
     try {
+        let friends = false
         let friend = await User.findOne({ name: req.body.friend })
         let user = await User.findOne({ name: req.body.name })
         user.friend.forEach(element => {
-            if (element.friend_id.toString() == friend._id.toString())
-                return res.status(200).json({
-                    msg : "friend request already sent"
-                })
+            if (element.friend_id.toString() == friend._id.toString()) {
+                friends = true
+                if (element.status == "accepted") {
+                    return res.status(200).json({
+                        msg: "Already friends"
+                    })
+                }
+                else {
+                    return res.status(200).json({
+                        msg: "friend request already sent"
+                    })
+                }
+            }
         });
+        if (friends) {
+            return
+        }
         user = await User.findOneAndUpdate({ name: req.body.name }, {
             $push: {
                 friend: {

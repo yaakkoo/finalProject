@@ -9,7 +9,7 @@ router.get('/getUser', getUser);
 router.post('/getUserName', getUserName);
 router.post('/getUserId', getUserId)
 router.post('/signUp', signUp);
-router.post('/confirm' , confirm)
+router.post('/confirm', confirm)
 router.post('/editRate', Auth, editRate);
 router.post('/editWin', Auth, editWin);
 router.post('/editLose', Auth, editLose);
@@ -18,9 +18,9 @@ router.post('/online', Auth, online);
 router.post('/deleteUser', Auth, deleteUser);
 router.post('/image', Auth, image)
 router.post('/availableFriends', Auth, availableFriends)
-router.post('/forgetPassword' ,forgetPassword)
-router.post('/setPassword/:id',setPassword)
-router.post('/editPassword',Auth  , editPassword)
-router.post('/search'  , search)
+router.post('/forgetPassword', forgetPassword)
+router.post('/setPassword/:id', setPassword)
+router.post('/editPassword', Auth, editPassword)
+router.post('/search', search)
 
 module.exports = router;

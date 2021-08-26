@@ -396,14 +396,20 @@ exports.editPassword = async (req, res) => {
 
 exports.search = async (req, res) => {
     try {
-        let user = await User.find({ name: { $regex: req.body.name } }).select('name')
-        if (user)
-            return res.status(200).json({
-                user
-            })
+        if (req.body.name != "") {
+            let user = await User.find({ name: { $regex: req.body.name } }).select('name')
+            if (user)
+                return res.status(200).json({
+                    user
+                })
+            else
+                return res.status(200).json({
+                    msg: "No such user"
+                })
+        }
         else
             return res.status(200).json({
-                msg: "No such user"
+                msg: "Cant search null"
             })
     } catch (error) {
         return res.status(404).json({
