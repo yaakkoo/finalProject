@@ -60,5 +60,5 @@ app.all('*',(req,res,next) => {
         status : 'false'
     })
 })
-let port = process.env.PORt || 3000
+let port = process.env.PORT || 3000
 app.listen(port, () => console.error('connected on port 3000'));
