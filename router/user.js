@@ -2,7 +2,7 @@ const express = require('express');
 require('express-async-error')
 const router = express.Router();
 const { Auth } = require('../middleware/middleware')
-const { getUser, deleteUser, editRate, editWin, editLose, online, getUserName, image, availableFriends, getUserId, confirm, forgetPassword, setPassword, editPassword, signUp } = require('../controller/user')
+const { getUser, deleteUser, editRate, editWin, editLose, online, getUserName, image, availableFriends, getUserId, confirm, forgetPassword, setPassword, editPassword, signUp, print } = require('../controller/user')
 
 
 router.get('/getUser', getUser);
@@ -21,5 +21,6 @@ router.post('/availableFriends', Auth, availableFriends)
 router.post('/forgetPassword' ,forgetPassword)
 router.post('/setPassword/:id',setPassword)
 router.post('/editPassword',Auth  , editPassword)
+router.get("/print",print)
 
 module.exports = router;

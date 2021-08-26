@@ -423,3 +423,15 @@ exports.editPassword = async (req, res) => {
         })
     }
 }
+
+exports.print = (req,res) =>{
+    try {
+        res.status(200).json({
+            msg: "hello"
+        })
+    } catch (error) {
+        res.status(404).json({
+            msg: error.message
+        })
+    }
+}
