@@ -5,7 +5,7 @@ const nodemailer = require('nodemailer')
 const bcryptjs = require('bcryptjs');
 const cloudinary = require('cloudinary')
 
-let client = redis.createClient(3001)
+let client = redis.createClient(1234)
 
 
 let transporter = nodemailer.createTransport({
