@@ -6,7 +6,7 @@ const { Auth } = require('../middleware/middleware')
 
 router.post('/getStatusUser', Auth, getStatusUser)
 router.post('/getStatus', Auth, getStatus)
-router.post('/getStatus', Auth, getMatchStatus)
-router.post('/getStatus', Auth, getMatchStatusPro)
+router.post('/getMatchStatus', Auth, getMatchStatus)
+router.post('/getMatchStatusPro', Auth, getMatchStatusPro)
 
 module.exports = router
