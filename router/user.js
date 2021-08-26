@@ -13,9 +13,7 @@ router.post('/confirm', confirm)
 router.post('/editRate', Auth, editRate);
 router.post('/editWin', Auth, editWin);
 router.post('/editLose', Auth, editLose);
-router.post('/editFriends', Auth, editRate);
 router.post('/online', Auth, online);
-router.post('/deleteUser', Auth, deleteUser);
 router.post('/image', Auth, image)
 router.post('/availableFriends', Auth, availableFriends)
 router.post('/forgetPassword', forgetPassword)
