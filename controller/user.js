@@ -5,8 +5,6 @@ const bcryptjs = require('bcryptjs');
 const cloudinary = require('cloudinary');
 const { Temp } = require('../model/temp');
 
-
-
 let transporter = nodemailer.createTransport({
     service: 'gmail',
     tls: true,
@@ -70,6 +68,12 @@ exports.signUp = async (req, res) => {
         if (user) {
             return res.status(200).json({
                 msg: "Username already existed"
+            })
+        }
+        user = await User.findOne({ email: req.body.email })
+        if (user) {
+            return res.status(200).json({
+                msg: "Email already existed"
             })
         }
         user = {}
@@ -278,15 +282,18 @@ exports.availableFriends = async (req, res) => {
 
 exports.forgetPassword = async (req, res) => {
     try {
-        let user = await User.findOne({ name: req.body.name }).select('name email')
-
+        let user = await User.findOne({ $or: [{ name: req.body.user }, { email: req.body.user }] })
+        if (!user)
+            return res.status(404).json({
+                msg: "No such user"
+            })
         let code = Math.floor(Math.random() * 9999999999)
 
         const options = {
             from: 'CompetitiveFightClub@gmail.com',
             to: user.email,
             subject: 'Confirm your account',
-            html: '<div style="text-align: center; margin-top: 7%;color : black"><h1 style =" color : #ab1025">Competitive Fight Club</h1><p  style="margin-top: 2%;"> <h2>Welcome to our fight club </h2> <br><h3>Please use this link to reset your <strong style="color: red;"> ' + req.body.name + ' </strong> password</h3><br><h2> The Link : </h2><br><div style="width: 10%;height: 5%;margin: 1% auto;"><h2> http://localhost:3000/user/changePassword/' + code + '</h2><br></div>The support team ... <3 </p></div>'
+            html: '<div style="text-align: center; margin-top: 7%;color : black"><h1 style =" color : #ab1025">Competitive Fight Club</h1><p  style="margin-top: 2%;"> <h2>Welcome to our fight club </h2> <br><h3>Please use this CODE to reset your <strong style="color: red;"> ' + user.name + ' </strong> password</h3><br><h2> The Code : </h2><br><div style="text-align: center; width: 10%;height: 5%;margin: 1% auto;"><h2>' + code + '</h2><br></div>The support team ... <3 </p></div>'
         }
         let data = {}
         data.user = user.name
@@ -310,21 +317,39 @@ exports.forgetPassword = async (req, res) => {
     }
 }
 
-exports.setPassword = async (req, res) => {
+exports.confirmCodePass = async (req, res) => {
     try {
-        console.log(123);
-        let user = await Temp.findOneAndDelete({ code: req.params.id })
+        let user = await Temp.findOne({ code: req.body.code })
         if (!user)
             return res.status(200).json({
                 msg: "Verification wrong"
             })
-        await User.findOneAndUpdate({ name: req.body.name }, {
-            $set: {
-                password: req.body.password
+        return res.status(200).json({
+            msg: 'Please enter your Password'
+        })
+    } catch (error) {
+        return res.status(404).json({
+            msg: error.message
+        })
+    }
+}
+
+exports.setPassword = async (req, res) => {
+    try {
+        let user = await Temp.findOneAndDelete({ code: req.body.code })
+        if (!user) {
+            return res.status(404).json({
+                msg: "Verification wrong"
+            })
+        }
+        console.log(user.user);
+        await User.findOneAndUpdate({name : user.user} , {
+            $set : {
+                password : req.body.password
             }
         })
         return res.status(200).json({
-            msg: 'Password changed successfully'
+            msg : "Password changed"
         })
     } catch (error) {
         return res.status(404).json({

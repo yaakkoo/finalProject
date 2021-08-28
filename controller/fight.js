@@ -109,7 +109,7 @@ exports.accept = async (req, res) => {
                 sent_notification: receiver.name
             }
         })
-        let n_problems = await getProblems(req.body.rate1, req.body.rate2)
+        let n_problems = await getProblems(req.body.rate1, req.body.rate2, req.body.num)
         if (n_problems == 'error')
             return res.status(404).json({
                 msg: 'error in getting problems'
@@ -226,12 +226,12 @@ async function sendNoti(senderName, receiverName, difficulty) {
     }
 }
 
-async function getProblems(rate1, rate2) {
+async function getProblems(rate1, rate2, num) {
     try {
         let all_problems = await Problem.find({ rate: { $gt: rate1, $lt: rate2 } })
         let problems = []
         let i = Math.floor(Math.random() * all_problems.length)
-        for (; problems.length <= 4; i = Math.floor(Math.random() * all_problems.length)) {
+        for (; problems.length <= num; i = Math.floor(Math.random() * all_problems.length)) {
             if (problems.indexOf(all_problems[i].code) != -1)
                 continue
             problems.push(all_problems[i].code)
