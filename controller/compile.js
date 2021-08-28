@@ -33,10 +33,7 @@ exports.compile = async (req, res) => {
                 accept = await js_comp(code, inp, output[i])
             }
         }
-
         await editNum(req.body.name)
-        if (req.body.match == null)
-            req.body.match = ''
         await addSubmit(req.body.name, req.body.p_code, req.body.code,req.body.match);
 
         let submit = await editStatus(req.body.p_code, req.body.name, accept, req.body.code)

@@ -6,25 +6,26 @@ const User = require("../model/user");
 exports.editStatus = async (p_code, name, accpet, code) => {
     try {
         if (accpet == 1) {
-            const submit = await Submit.findOneAndUpdate({ name: name, p_code: p_code, code: code }, {
+            let submit = await Submit.findOneAndUpdate({ name: name, p_code: p_code, code: code }, {
                 $set: {
                     status: 'Accepted'
                 }
             }, { new: true })
             return submit
         } else if (accept == 2) {
-            const submit = await Submit.findOneAndUpdate({ name: name, p_code: p_code, code: code }, {
+            let submit = await Submit.findOneAndUpdate({ name: name, p_code: p_code, code: code }, {
                 $set: {
                     status: 'Wrong Answer'
                 }
             }, { new: true })
             return submit
         } else if (accept == 3) {
-            const submit = await Submit.findOneAndUpdate({ name: name, p_code: p_code, code: code }, {
+            let submit = await Submit.findOneAndUpdate({ name: name, p_code: p_code, code: code }, {
                 $set: {
                     status: 'Compilation Error'
                 }
             }, { new: true })
+            
             return submit
         }
 
@@ -45,16 +46,16 @@ exports.editNum = async (name) => {
     }
 }
 
-exports.addSubmit = async (name, p_code, code, match) => {
+exports.addSubmit = async (name, p_code, code, match = null) => {
     try {
-        const s = new Submit({
-            name: name,
-            p_code: p_code,
-            code: code,
-            status: 'Pending',
-            match: match
-        })
-        return submit = await s.save();
+        let submit = {}
+        submit.name = name
+        submit.p_code = p_code
+        submit.status = "pending"
+        submit.code = code
+        submit.match = match
+        await Submit.create(submit)
+        return submit
     } catch (error) {
         console.log("addsubmit   " + error.message)
     }
