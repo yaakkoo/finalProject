@@ -73,13 +73,14 @@ async function cpp_comp(code, inp, output) {
     await cpp.runSource(code, { stdin: inp })
         .then(
             r => {
-                if (r.stdout != '') {
-                    if (output != r.stdout) {
+                if (r.stdout !== '') {
+                    if (output !== r.stdout) {
                         accept = 2
 
                     }
-                } else if (r.stderr != '') {
+                } else if (r.stderr !== '') {
                     accept = 3
+                    console.log(r.stderr);
                 }
             }
         )
@@ -94,12 +95,12 @@ async function python_comp(code, inp, output) {
     await python.runSource(code, { stdin: inp })
         .then(
             r => {
-                if (r.stdout != '') {
-                    if (output != r.stdout) {
+                if (r.stdout !== '') {
+                    if (output !== r.stdout) {
                         accept = 2
 
                     }
-                } else if (r.stderr != '') {
+                } else if (r.stderr !== '') {
                     accept = 3
                 }
             }
@@ -115,12 +116,12 @@ async function js_comp(code, inp, output) {
     await js.runSource(code, { stdin: inp })
         .then(
             r => {
-                if (r.stdout != '') {
-                    if (output != r.stdout) {
+                if (r.stdout !== '') {
+                    if (output !== r.stdout) {
                         accept = 2
 
                     }
-                } else if (r.stderr != '') {
+                } else if (r.stderr !== '') {
                     accept = 3
                 }
             }
@@ -136,12 +137,12 @@ async function c_comp(code, inp, output) {
     await c.runSource(code, { stdin: inp })
         .then(
             r => {
-                if (r.stdout != '') {
-                    if (output != r.stdout) {
+                if (r.stdout !== '') {
+                    if (output !== r.stdout) {
                         accept = 2
 
                     }
-                } else if (r.stderr != '') {
+                } else if (r.stderr !== '') {
                     accept = 3
                 }
             }
