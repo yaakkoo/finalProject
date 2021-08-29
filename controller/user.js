@@ -64,16 +64,10 @@ exports.getUserId = async (req, res) => {
 exports.signUp = async (req, res) => {
     try {
 
-        let user = await User.findOne({ name: req.body.name })
+        let user = await User.findOne({ $or: [{ name: req.body.name }, { email: req.body.email }] })
         if (user) {
             return res.status(200).json({
                 msg: "Username already existed"
-            })
-        }
-        user = await User.findOne({ email: req.body.email })
-        if (user) {
-            return res.status(200).json({
-                msg: "Email already existed"
             })
         }
         user = {}
@@ -143,7 +137,8 @@ exports.confirm = async (req, res) => {
         user = await User.findOne({ name: req.body.name }).select('-password -__v').populate({ path: 'friend.friend_id', select: 'name rate -_id' }).populate({ path: 'received_friend.friend_id', select: 'name rate -_id' })
         return res.status(200).json({
             msg: 'Account has been verified',
-            token: token
+            token: token,
+            user : user
         })
     } catch (error) {
         return res.status(404).json({
@@ -343,13 +338,13 @@ exports.setPassword = async (req, res) => {
             })
         }
         console.log(user.user);
-        await User.findOneAndUpdate({name : user.user} , {
-            $set : {
-                password : req.body.password
+        await User.findOneAndUpdate({ name: user.user }, {
+            $set: {
+                password: req.body.password
             }
         })
         return res.status(200).json({
-            msg : "Password changed"
+            msg: "Password changed"
         })
     } catch (error) {
         return res.status(404).json({

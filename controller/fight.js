@@ -44,7 +44,8 @@ exports.friendMatch = async (req, res) => {
         let noti = await sendNoti(req.body.sender, req.body.receiver, req.body.difficulty)
         if (noti === 'sent') {
             return res.status(200).json({
-                msg: "Notification sent to " + receiver.name + " \ndiffeculty : " + req.body.difficulty
+                msg: "Notification sent to " + receiver.name + " \ndiffeculty : " + req.body.difficulty,
+                type: req.body.number
             })
         } else {
             return res.status(200).json({
@@ -158,7 +159,8 @@ exports.randomMatch = async (req, res) => {
                 }
                 await Fight.create(fight)
                 return res.status(200).json({
-                    msg: "Notification sent to " + receiver[i].name + " \ndiffeculty : " + req.body.difficulty
+                    msg: "Notification sent to " + receiver[i].name + " \ndiffeculty : " + req.body.difficulty,
+                    type: req.body.number
                 })
             } else {
                 return res.status(200).json({
@@ -177,22 +179,24 @@ exports.randomMatch = async (req, res) => {
 
 exports.endFight = async (req, res) => {
     try {
-        let sender = await User.findOneAndUpdate({ _id: req.body.sender }, {
-            $set: {
-                inFight: false,
-                uuid: ''
-            }
-        })
-        let receiver = await User.findOneAndUpdate({ _id: req.body.receiver }, {
-            $set: {
-                inFight: false,
-                uuid: ''
-            }
-        })
-        await Fight.findOneAndDelete({ $or: [{ user1: sender._id }, { user2: sender._id }] })
-        return res.status(200).json({
-            msg: "Match ended"
-        })
+        setTimeout(async() => {
+            let sender = await User.findOneAndUpdate({ _id: req.body.sender }, {
+                $set: {
+                    inFight: false,
+                    uuid: ''
+                }
+            })
+            let receiver = await User.findOneAndUpdate({ _id: req.body.receiver }, {
+                $set: {
+                    inFight: false,
+                    uuid: ''
+                }
+            })
+            await Fight.findOneAndDelete({ $or: [{ user1: sender._id }, { user2: sender._id }] })
+            return res.status(200).json({
+                msg: "Match ended"
+            })
+        }, 60 * 60 * 1000);
     } catch (error) {
         return res.status(404).json({
             msg: "Error",

@@ -1,5 +1,5 @@
 const Problem = require('../model/problem')
-const { c, cpp, js, python } = require('compile-run');
+const { c, cpp, node, python } = require('compile-run');
 const { editStatus, editNum, addSubmit } = require('../helper/helper')
 const User = require('../model/user')
 
@@ -19,8 +19,10 @@ exports.compile = async (req, res) => {
         let input = problem.input
         let output = problem.output
         let code = req.body.code
-
+        number = 0
         for (i = 0; i < input.length; i++) {
+            if (accept == 2)
+                number = i
             let inp = ''
             inp = input[i].flat(Infinity).join('\n')
             if (req.body.lang == 'cpp') {
@@ -34,7 +36,7 @@ exports.compile = async (req, res) => {
             }
         }
         await editNum(req.body.name)
-        await addSubmit(req.body.name, req.body.p_code, req.body.code,req.body.match);
+        await addSubmit(req.body.name, req.body.p_code, req.body.code, req.body.match);
 
         let submit = await editStatus(req.body.p_code, req.body.name, accept, req.body.code)
         if (accept == 1) {
@@ -46,7 +48,7 @@ exports.compile = async (req, res) => {
         } else if (accept == 2) {
 
             return res.status(200).json({
-                Status: 'Wrong answer',
+                Status: 'Wrong answer in test ' + number,
                 submit: submit
             })
         }
@@ -95,12 +97,12 @@ async function python_comp(code, inp, output) {
     await python.runSource(code, { stdin: inp })
         .then(
             r => {
-                if (r.stdout !== '') {
-                    if (output !== r.stdout) {
+                if (r.stdout != '') {
+                    if (output != r.stdout) {
                         accept = 2
-
+                        console.log({e : r.stdout});
                     }
-                } else if (r.stderr !== '') {
+                } else if (r.stderr != '') {
                     accept = 3
                 }
             }
@@ -113,7 +115,7 @@ async function python_comp(code, inp, output) {
 
 async function js_comp(code, inp, output) {
     let accept = 1
-    await js.runSource(code, { stdin: inp })
+    await node.runSource(code, { stdin: inp })
         .then(
             r => {
                 if (r.stdout !== '') {

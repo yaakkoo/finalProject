@@ -4,7 +4,7 @@ const bcryptjs = require('bcryptjs');
 
 exports.logIn = async (req, res) => {
     try {
-        let user = await User.findOne({ $or: [{ name: req.body.name }, { email: req.body.email }] }).select(' -__v').populate({ path: 'friend.friend_id', select: 'name rate _id' }).populate({ path: 'received_friend.friend_id', select: 'name rate _id' })
+        let user = await User.findOne({ $or: [{ name: req.body.user }, { email: req.body.user }] }).select(' -__v').populate({ path: 'friend.friend_id', select: 'name rate _id' }).populate({ path: 'received_friend.friend_id', select: 'name rate _id' })
         if (!user) {
             return res.status(404).json({
                 msg: 'Wrong Username or Email or Password '
