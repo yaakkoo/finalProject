@@ -41,11 +41,11 @@ exports.friendMatch = async (req, res) => {
             return res.status(404).json({
                 msg: "notification already sent"
             })
-        let noti = await sendNoti(req.body.sender, req.body.receiver, req.body.difficulty)
+        let noti = await sendNoti(req.body.sender, req.body.receiver, req.body.difficulty , req.body.type)
         if (noti === 'sent') {
             return res.status(200).json({
                 msg: "Notification sent to " + receiver.name + " \ndiffeculty : " + req.body.difficulty,
-                type: req.body.number
+                type: req.body.type
             })
         } else {
             return res.status(200).json({
@@ -145,7 +145,7 @@ exports.randomMatch = async (req, res) => {
                 msg: "try again"
             })
         else {
-            let noti = await sendNoti(req.body.sender, receiver[i].name, req.body.difficulty)
+            let noti = await sendNoti(req.body.sender, receiver[i].name, req.body.difficulty , req.bpdy.type)
             if (noti === 'sent') {
                 let n_problems = await getProblems(req.body.rate1, req.body.rate2)
                 if (n_problems == 'error')
@@ -160,7 +160,7 @@ exports.randomMatch = async (req, res) => {
                 await Fight.create(fight)
                 return res.status(200).json({
                     msg: "Notification sent to " + receiver[i].name + " \ndiffeculty : " + req.body.difficulty,
-                    type: req.body.number
+                    type: req.body.type
                 })
             } else {
                 return res.status(200).json({
@@ -179,7 +179,7 @@ exports.randomMatch = async (req, res) => {
 
 exports.endFight = async (req, res) => {
     try {
-        setTimeout(async() => {
+        setTimeout(async () => {
             let sender = await User.findOneAndUpdate({ _id: req.body.sender }, {
                 $set: {
                     inFight: false,
@@ -205,12 +205,12 @@ exports.endFight = async (req, res) => {
     }
 }
 
-async function sendNoti(senderName, receiverName, difficulty) {
+async function sendNoti(senderName, receiverName, difficulty, type) {
 
     try {
         let sender = await User.findOneAndUpdate({ name: senderName }, {
             $push: {
-                sent_notification: receiverName + " diffeculty : " + difficulty
+                sent_notification: receiverName + " diffeculty : " + difficulty + " type : " + type
             }
         })
 
@@ -219,7 +219,7 @@ async function sendNoti(senderName, receiverName, difficulty) {
                 $push: {
                     notification: {
                         friend_id: sender._id,
-                        noti_text: sender.name + " asking for a fight !! \ndiffeculty : " + difficulty
+                        noti_text: sender.name + " asking for a fight !! \ndiffeculty : " + difficulty + " type : " + type
                     }
                 }
             }

@@ -4,6 +4,8 @@ const nodemailer = require('nodemailer')
 const bcryptjs = require('bcryptjs');
 const cloudinary = require('cloudinary');
 const { Temp } = require('../model/temp');
+const redis = require('redis');
+let client = redis.createClient()
 
 let transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -64,6 +66,14 @@ exports.getUserId = async (req, res) => {
 exports.signUp = async (req, res) => {
     try {
 
+        client.on('connect', () => {
+            console.log('connected to redis');
+        })
+
+        client.on('error', (err) => {
+            console.log(err);
+        })
+
         let user = await User.findOne({ $or: [{ name: req.body.name }, { email: req.body.email }] })
         if (user) {
             return res.status(200).json({
@@ -99,10 +109,14 @@ exports.signUp = async (req, res) => {
         user = {}
         user.code = code
         user.user = data
-        await Temp.create(user)
+        client.setex(code, 60, data, (err, reply) => {
+            if (err)
+                return res.status(404).json({
+                    msg: err
+                })
+        })
         transporter.sendMail(options, (err, result) => {
             if (err) {
-                console.log("mail");
                 return res.status(404).json({
                     msg: err,
                     err: err.message
@@ -124,22 +138,28 @@ exports.signUp = async (req, res) => {
 
 exports.confirm = async (req, res) => {
     try {
-
-        let data = await Temp.findOneAndDelete({ code: req.body.code }).select('user')
-        if (!data) {
-            return res.status(200).json({
-                msg: "Wrong code"
-            })
-        }
-        data = JSON.parse(data.user)
-        let user = await User.create(data)
-        let token = jwt.sign({ _id: data._id, name: data.name }, process.env.TOKEN)
-        user = await User.findOne({ name: req.body.name }).select('-password -__v').populate({ path: 'friend.friend_id', select: 'name rate -_id' }).populate({ path: 'received_friend.friend_id', select: 'name rate -_id' })
-        return res.status(200).json({
-            msg: 'Account has been verified',
-            token: token,
-            user : user
+        client.get(req.body.code, async (err, reply) => {
+            if (err)
+                return res.status(404).json({
+                    msg: err
+                })
+            if (reply == null) {
+                return res.status(200).json({
+                    msg: 'Verification failed \nPlease re-try'
+                })
+            } else {
+                let data = JSON.parse(reply)
+                let user = await User.create(data)
+                let token = jwt.sign({ _id: data._id, name: data.name }, process.env.TOKEN)
+                user = await User.findOne({ name: data.name }).select('-password -__v').populate({ path: 'friend.friend_id', select: 'name rate -_id' }).populate({ path: 'received_friend.friend_id', select: 'name rate -_id' })
+                return res.status(200).json({
+                    msg: 'Account has been verified',
+                    user: user,
+                    token: token
+                })
+            }
         })
+
     } catch (error) {
         return res.status(404).json({
             status: 'Error',
@@ -278,6 +298,14 @@ exports.availableFriends = async (req, res) => {
 exports.forgetPassword = async (req, res) => {
     try {
         let user = await User.findOne({ $or: [{ name: req.body.user }, { email: req.body.user }] })
+
+        client.on('connect', () => {
+            console.log('connected to redis');
+        })
+
+        client.on('error', (err) => {
+            console.log(err);
+        })
         if (!user)
             return res.status(404).json({
                 msg: "No such user"
@@ -290,7 +318,16 @@ exports.forgetPassword = async (req, res) => {
             subject: 'Confirm your account',
             html: '<div style="text-align: center; margin-top: 7%;color : black"><h1 style =" color : #ab1025">Competitive Fight Club</h1><p  style="margin-top: 2%;"> <h2>Welcome to our fight club </h2> <br><h3>Please use this CODE to reset your <strong style="color: red;"> ' + user.name + ' </strong> password</h3><br><h2> The Code : </h2><br><div style="text-align: center; width: 10%;height: 5%;margin: 1% auto;"><h2>' + code + '</h2><br></div>The support team ... <3 </p></div>'
         }
-        let data = {}
+        let data = JSON.stringify(user);
+        client.setex(code, 60, user.name, (err, reply) => {
+            if (err) {
+                return res.status(404).json({
+                    msg: err
+                })
+            }
+        })
+
+        data = {}
         data.user = user.name
         data.code = code
         await Temp.create(data)
@@ -314,14 +351,16 @@ exports.forgetPassword = async (req, res) => {
 
 exports.confirmCodePass = async (req, res) => {
     try {
-        let user = await Temp.findOne({ code: req.body.code })
-        if (!user)
-            return res.status(200).json({
-                msg: "Verification wrong"
-            })
-        return res.status(200).json({
-            msg: 'Please enter your Password'
+        client.get(req.body.code, (err, reply) => {
+            if (err)
+                return res.status(200).json({
+                    msg: "Verification failed "
+                })
         })
+        return res.status(200).json({
+            msg: "Verification done !!"
+        })
+
     } catch (error) {
         return res.status(404).json({
             msg: error.message
@@ -331,20 +370,19 @@ exports.confirmCodePass = async (req, res) => {
 
 exports.setPassword = async (req, res) => {
     try {
-        let user = await Temp.findOneAndDelete({ code: req.body.code })
-        if (!user) {
-            return res.status(404).json({
-                msg: "Verification wrong"
+        client.get(req.body.code, async (err, reply) => {
+            if (err)
+                return res.status(404).json({
+                    msg: 'This link expired or wrong link'
+                })
+            let user = await User.findOneAndUpdate({ name: reply }, {
+                $set: {
+                    password: req.body.password
+                }
             })
-        }
-        console.log(user.user);
-        await User.findOneAndUpdate({ name: user.user }, {
-            $set: {
-                password: req.body.password
-            }
-        })
-        return res.status(200).json({
-            msg: "Password changed"
+            return res.status(200).json({
+                msg: 'Password changed successfully'
+            })
         })
     } catch (error) {
         return res.status(404).json({
